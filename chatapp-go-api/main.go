@@ -28,26 +28,18 @@ type VisibleUser struct {
 	Username string `json:"username"`
 }
 
-func HashPassword(password string) string {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
-	if err != nil {
-		log.Fatalf("Error when hashing pass %s", err)
-	}
-	return string(bytes)
-}
-
-func CheckPasswordHash(password string, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	return err == nil
-}
-
 func main() {
 	router := gin.Default()
+	router.GET("/", HomeHandler)
 	router.GET("/users", GetUsers)
 	router.GET("/users/:id", GetUserById)
 	router.POST("/users", AddUser)
 	router.DELETE("/users/:id", DeleteUserById)
-	router.Run("localhost:8080")
+	router.Run(":8080")
+}
+
+func HomeHandler(c *gin.Context) {
+	c.String(http.StatusOK, "Hello world")
 }
 
 func DeleteUserById(c *gin.Context) {
@@ -152,4 +144,17 @@ func AddUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "User created successfully"})
+}
+
+func HashPassword(password string) string {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	if err != nil {
+		log.Fatalf("Error when hashing pass %s", err)
+	}
+	return string(bytes)
+}
+
+func CheckPasswordHash(password string, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
 }
