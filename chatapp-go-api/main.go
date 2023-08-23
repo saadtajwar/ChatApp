@@ -46,15 +46,27 @@ func main() {
 	router.GET("/users", GetUsers)
 	router.GET("/users/:id", GetUserById)
 	router.POST("/users", AddUser)
-	router.PUT("/users/:id", UpdateUser)
+	router.DELETE("/users/:id", DeleteUserById)
 	router.Run("localhost:8080")
 }
 
-func UpdateUser(c *gin.Context) {
-	newUser := VisibleUser{
-		Username: "exampleusername",
+func DeleteUserById(c *gin.Context) {
+	userID := c.Param("id")
+	input := &dynamodb.DeleteItemInput{
+		TableName: aws.String(tableName),
+		Key: map[string]*dynamodb.AttributeValue{
+			"UserID": {
+				S: aws.String(userID),
+			},
+		},
 	}
-	c.JSON(http.StatusOK, newUser)
+
+	_, err := db.DeleteItem(input)
+	if err != nil {
+		log.Fatalf("Error when deleting item %s", err)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
 }
 
 func GetUsers(c *gin.Context) {
