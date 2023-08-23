@@ -1,0 +1,53 @@
+	// Adding new item to the table
+	// newUser := User{
+	// 	UserID:       uuid.New().String(),
+	// 	Username:     "testuser123",
+	// 	PasswordHash: HashPassword("anotherexamplepassword"),
+	// }
+
+	// av, err := dynamodbattribute.MarshalMap(newUser)
+	// if err != nil {
+	// 	log.Fatalf("Marshalling error %s", err)
+	// }
+
+	// tableName := "Users"
+
+	// input := &dynamodb.PutItemInput{
+	// 	Item:      av,
+	// 	TableName: aws.String(tableName),
+	// }
+
+	// _, err = db.PutItem(input)
+	// if err != nil {
+	// 	log.Fatalf("Error when PutItem %s", err)
+	// }
+
+	// fmt.Println("Added to the table")
+
+	//CREATING A NEW TABLE
+	// input := &dynamodb.CreateTableInput{
+	// 	AttributeDefinitions: []*dynamodb.AttributeDefinition{
+	// 		{
+	// 			AttributeName: aws.String("UserID"),
+	// 			AttributeType: aws.String("S"),
+	// 		},
+	// 	},
+	// 	KeySchema: []*dynamodb.KeySchemaElement{
+	// 		{
+	// 			AttributeName: aws.String("UserID"),
+	// 			KeyType:       aws.String("HASH"),
+	// 		},
+	// 	},
+	// 	ProvisionedThroughput: &dynamodb.ProvisionedThroughput{
+	// 		ReadCapacityUnits:  aws.Int64(10),
+	// 		WriteCapacityUnits: aws.Int64(10),
+	// 	},
+	// 	TableName: aws.String(tableName),
+	// }
+
+	// _, err := db.CreateTable(input)
+	// if err != nil {
+	// 	log.Fatalf("Error creating table: %s", err)
+	// }
+
+	// fmt.Println("Created the table", tableName)
