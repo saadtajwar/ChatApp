@@ -1,9 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
+
+	"example/chatapp-go-api/pkg/websocket"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -11,7 +12,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/gorilla/websocket"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -30,34 +30,28 @@ var sess = session.Must(session.NewSessionWithOptions(session.Options{
 }))
 var db = dynamodb.New(sess)
 
-var wsupgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
-}
-
-func wshandler(w http.ResponseWriter, r *http.Request) {
-	conn, err := wsupgrader.Upgrade(w, r, nil)
+func wshandler(w http.ResponseWriter, r *http.Request, pool *websocket.Pool) {
+	conn, err := websocket.Upgrade(w, r)
 	if err != nil {
 		log.Fatalf("Error when upgrading HTTP connection to Websocket protocol %s", err)
 	}
 
-	for {
-		t, msg, err := conn.ReadMessage()
-		if err != nil {
-			log.Fatalf("Error when reading message %s", err)
-		}
-		fmt.Println(string(msg))
-		conn.WriteMessage(t, msg)
+	client := &websocket.Client{
+		Conn: conn,
+		Pool: pool,
 	}
+
+	pool.Register <- client
+	client.Read()
+
 }
 
 func main() {
 	router := gin.Default()
+	pool := websocket.NewPool()
+	go pool.Start()
 	router.GET("/ws", func(c *gin.Context) {
-		wshandler(c.Writer, c.Request)
+		wshandler(c.Writer, c.Request, pool)
 	})
 	router.GET("/", HomeHandler)
 	router.GET("/users", GetUsers)
