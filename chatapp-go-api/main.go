@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -10,14 +11,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/gorilla/websocket"
 	"golang.org/x/crypto/bcrypt"
 )
-
-var tableName = "Users"
-var sess = session.Must(session.NewSessionWithOptions(session.Options{
-	SharedConfigState: session.SharedConfigEnable,
-}))
-var db = dynamodb.New(sess)
 
 type User struct {
 	Username string `json:"username"`
@@ -28,8 +24,41 @@ type VisibleUser struct {
 	Username string `json:"username"`
 }
 
+var tableName = "Users"
+var sess = session.Must(session.NewSessionWithOptions(session.Options{
+	SharedConfigState: session.SharedConfigEnable,
+}))
+var db = dynamodb.New(sess)
+
+var wsupgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
+
+func wshandler(w http.ResponseWriter, r *http.Request) {
+	conn, err := wsupgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Fatalf("Error when upgrading HTTP connection to Websocket protocol %s", err)
+	}
+
+	for {
+		t, msg, err := conn.ReadMessage()
+		if err != nil {
+			log.Fatalf("Error when reading message %s", err)
+		}
+		fmt.Println(string(msg))
+		conn.WriteMessage(t, msg)
+	}
+}
+
 func main() {
 	router := gin.Default()
+	router.GET("/ws", func(c *gin.Context) {
+		wshandler(c.Writer, c.Request)
+	})
 	router.GET("/", HomeHandler)
 	router.GET("/users", GetUsers)
 	router.GET("/users/:id", GetUserById)
