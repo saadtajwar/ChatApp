@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -55,23 +55,32 @@ func main() {
 	})
 	router.GET("/", HomeHandler)
 	router.GET("/users", GetUsers)
-	router.GET("/users/:id", GetUserById)
 	router.POST("/users", AddUser)
-	router.DELETE("/users/:id", DeleteUserById)
+	router.DELETE("/users/:username", DeleteUserByUsername)
+	router.POST("/login", Login)
 	router.Run(":8080")
+}
+
+func Login(c *gin.Context) {
+	var loginData User
+	if err := c.ShouldBindJSON(&loginData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 }
 
 func HomeHandler(c *gin.Context) {
 	c.String(http.StatusOK, "Hello world")
 }
 
-func DeleteUserById(c *gin.Context) {
-	userID := c.Param("id")
+func DeleteUserByUsername(c *gin.Context) {
+	username := c.Param("username")
 	input := &dynamodb.DeleteItemInput{
 		TableName: aws.String(tableName),
 		Key: map[string]*dynamodb.AttributeValue{
-			"UserID": {
-				S: aws.String(userID),
+			"Username": {
+				S: aws.String(username),
 			},
 		},
 	}
@@ -86,7 +95,7 @@ func DeleteUserById(c *gin.Context) {
 
 func GetUsers(c *gin.Context) {
 	input := &dynamodb.ScanInput{
-		TableName: aws.String(tableName), // replace with your table name
+		TableName: aws.String(tableName),
 	}
 
 	result, err := db.Scan(input)
@@ -109,34 +118,6 @@ func GetUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, users)
 }
 
-func GetUserById(c *gin.Context) {
-	id := c.Param("id")
-	result, err := db.GetItem(&dynamodb.GetItemInput{
-		TableName: aws.String(tableName),
-		Key: map[string]*dynamodb.AttributeValue{
-			"UserID": {
-				S: aws.String(id),
-			},
-		},
-	})
-
-	if err != nil {
-		log.Fatalf("Error when calling GetItem %s", err)
-	}
-
-	if result.Item == nil {
-		log.Fatalf("Couldn't find user with that ID")
-	}
-
-	user := VisibleUser{}
-	err = dynamodbattribute.UnmarshalMap(result.Item, &user)
-	if err != nil {
-		log.Fatalf("Failed to unmarshal record")
-	}
-
-	c.JSON(http.StatusOK, user)
-}
-
 func AddUser(c *gin.Context) {
 	var user User
 	if err := c.ShouldBindJSON(&user); err != nil {
@@ -144,13 +125,9 @@ func AddUser(c *gin.Context) {
 		return
 	}
 
-	userID := uuid.New().String()
 	input := &dynamodb.PutItemInput{
 		TableName: aws.String(tableName),
 		Item: map[string]*dynamodb.AttributeValue{
-			"UserID": {
-				S: &userID,
-			},
 			"Username": {
 				S: aws.String(user.Username),
 			},
@@ -162,7 +139,8 @@ func AddUser(c *gin.Context) {
 
 	_, err := db.PutItem(input)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error inserting item into DB"})
+		fmt.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
 

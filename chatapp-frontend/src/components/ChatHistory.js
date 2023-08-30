@@ -6,7 +6,7 @@ const ChatHistory = ({messages}) => {
     <div>
         <ul>
             {messages.map(msg =>(
-                <li key={msg.timeStamp}>{msg.data}</li>
+                <li key={msg.timeStamp}>{JSON.parse(msg.data).body}</li>
             ))}
         </ul>
     </div>

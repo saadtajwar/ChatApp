@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import {connect, sendMsg} from '../api'
 import ChatHistory from './ChatHistory';
+import ChatInput from './ChatInput';
 
 const ChatPage = () => {
   const [chatHistory, setChatHistory] = useState([]);
@@ -14,9 +15,11 @@ const ChatPage = () => {
   }, []);
 
 
-  const send = () => {
-    sendMsg("Goodbye");
-    console.log("Send function in chatpage called with hello");
+  const send = (e) => {
+    if (e.keyCode === 13) {
+      sendMsg(e.target.value);
+      e.target.value = "";
+    }
   }
 
   return (
@@ -26,7 +29,7 @@ const ChatPage = () => {
         </div>
         <div className='hero-body'>
           <ChatHistory messages={chatHistory} />
-          <button onClick={send}>Hit</button>
+          <ChatInput send={send}/>
         </div>
     </section>
   )
