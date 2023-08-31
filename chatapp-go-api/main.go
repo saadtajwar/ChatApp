@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -48,6 +49,13 @@ func wshandler(w http.ResponseWriter, r *http.Request, pool *websocket.Pool) {
 
 func main() {
 	router := gin.Default()
+	config := cors.DefaultConfig()
+	config.AllowAllOrigins = true
+	config.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
+	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
+
+	router.Use(cors.New(config))
+
 	pool := websocket.NewPool()
 	go pool.Start()
 	router.GET("/ws", func(c *gin.Context) {
@@ -67,6 +75,39 @@ func Login(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	result, err := db.GetItem(&dynamodb.GetItemInput{
+		TableName: aws.String(tableName),
+		Key: map[string]*dynamodb.AttributeValue{
+			"Username": {
+				S: aws.String(loginData.Username),
+			},
+		},
+	})
+
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Error fetching user from DB"})
+		return
+	}
+
+	if result.Item == nil {
+		c.JSON(400, gin.H{"error": "Invalid username"})
+		return
+	}
+
+	var dbUser User
+	err = dynamodbattribute.UnmarshalMap(result.Item, &dbUser)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Error unmarshalling DB result"})
+		return
+	}
+
+	if !CheckPasswordHash(loginData.Password, dbUser.Password) {
+		c.JSON(401, gin.H{"error": "Invalid password"})
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "Logged in successfully", "username": dbUser.Username})
 
 }
 

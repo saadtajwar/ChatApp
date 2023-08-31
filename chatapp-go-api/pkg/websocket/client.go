@@ -8,9 +8,9 @@ import (
 )
 
 type Client struct {
-	ID   string
-	Conn *websocket.Conn
-	Pool *Pool
+	Username string
+	Conn     *websocket.Conn
+	Pool     *Pool
 }
 
 type Message struct {
@@ -18,20 +18,20 @@ type Message struct {
 	Body string `json:"body"`
 }
 
-func (c *Client) Read() {
+func (client *Client) Read() {
 	defer func() {
-		c.Pool.Unregister <- c
-		c.Conn.Close()
+		client.Pool.Unregister <- client
+		client.Conn.Close()
 	}()
 
 	for {
-		messageType, p, err := c.Conn.ReadMessage()
+		messageType, msg, err := client.Conn.ReadMessage()
 		if err != nil {
 			log.Println(err)
 			return
 		}
-		message := Message{Type: messageType, Body: string(p)}
-		c.Pool.Broadcast <- message
+		message := Message{Type: messageType, Body: string(msg)}
+		client.Pool.Broadcast <- message
 		fmt.Printf("Message Received: %+v\n", message)
 	}
 }
