@@ -3,20 +3,7 @@ package websocket
 import (
 	"fmt"
 	"log"
-
-	"github.com/gorilla/websocket"
 )
-
-type Client struct {
-	Username string
-	Conn     *websocket.Conn
-	Pool     *Pool
-}
-
-type Message struct {
-	Type int    `json:"type"`
-	Body string `json:"body"`
-}
 
 func (client *Client) Read() {
 	defer func() {
@@ -25,12 +12,18 @@ func (client *Client) Read() {
 	}()
 
 	for {
-		messageType, msg, err := client.Conn.ReadMessage()
+		_, msg, err := client.Conn.ReadMessage()
 		if err != nil {
 			log.Println(err)
 			return
 		}
-		message := Message{Type: messageType, Body: string(msg)}
+
+		payload := Payload{
+			UserID:   client.UserID,
+			Username: client.Username,
+			Message:  string(msg),
+		}
+		message := SocketEvent{EventName: "Broadcast", EventPayload: payload}
 		client.Pool.Broadcast <- message
 		fmt.Printf("Message Received: %+v\n", message)
 	}

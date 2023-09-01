@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -20,4 +21,28 @@ func Upgrade(w http.ResponseWriter, r *http.Request) (*websocket.Conn, error) {
 		return ws, err
 	}
 	return ws, nil
+}
+
+func HandleSocketPayloadEvents(client *Client, socketEvent SocketEvent) {
+	var socketEventResponse SocketEvent
+	selectedUserID := socketEvent.EventPayload.UserID
+	socketEventResponse.EventName = "Message Response"
+	socketEventResponse.EventPayload = Payload{
+		UserID: selectedUserID,
+		Message: socketEvent.EventPayload.Message,
+		Username: ,
+	}
+}
+
+func EmitToSpecificClient(pool *Pool, payload SocketEvent, UserID string) {
+	for client := range pool.Clients {
+		if client.UserID == UserID {
+			select {
+			case client.Send <- payload:
+			default:
+				close(client.Send)
+				delete(pool.Clients, client)
+			}
+		}
+	}
 }
