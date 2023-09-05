@@ -84,10 +84,6 @@ func Login(c *gin.Context) {
 
 }
 
-func HomeHandler(c *gin.Context) {
-	c.String(http.StatusOK, "Hello world")
-}
-
 func DeleteUserByUsername(c *gin.Context) {
 	username := c.Param("username")
 	input := &dynamodb.DeleteItemInput{
@@ -118,9 +114,9 @@ func GetUsers(c *gin.Context) {
 		return
 	}
 
-	users := make([]VisibleUser, len(result.Items))
+	users := make([]User, len(result.Items))
 	for i, item := range result.Items {
-		user := VisibleUser{}
+		user := User{}
 		err = dynamodbattribute.UnmarshalMap(item, &user)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error unmarshalling item"})
@@ -159,4 +155,8 @@ func AddUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "User created successfully"})
+}
+
+func HomeHandler(c *gin.Context) {
+	c.String(http.StatusOK, "Hello world")
 }

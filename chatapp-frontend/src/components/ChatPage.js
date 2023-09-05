@@ -81,18 +81,53 @@ const ChatPage = ({user}) => {
     };  
   }
 
-  const send = (e) => {
-    if (e.keyCode === 13) {
-      console.log('Here in the send block')
-      webSocketConnection.send(JSON.stringify({
-        EventName: 'message',
-        EventPayload: {
-          Message: e.target.value
+  // const send = (e) => {
+  //   if (e.keyCode === 13) {
+  //     console.log('Here in the send block')
+  //     webSocketConnection.send(JSON.stringify({
+  //       EventName: 'message',
+  //       EventPayload: {
+  //         Message: e.target.value
+  //       }
+  //     }))
+  //     e.target.value = "";
+  //   }
+  // }
+
+  const handleSend = (event) => {
+    try  {
+      if (event.key === 'Enter') {
+        if (!this.webSocketConnection || !event.target.value) { 
+          return false;
         }
-      }))
-      e.target.value = "";
+
+        webSocketConnection.send(JSON.stringify({
+          EventName: 'message',
+          EventPayload: {
+            Message: event.target.value
+          }
+        }));
+
+        event.target.value = "";
+
+      }
+    } catch(error) {
+      console.log("Error when handling send", error)
     }
   }
+
+
+
+  const setNewUserToChat = (event) => {
+    if (event.target && event.target.value) {
+        if (event.target.value === "select-user") {
+            alert("Select a user to chat");
+            return;
+        }
+        setSelectedUserID(event.target.value)
+    }
+}
+
 
   if (!user) {
     return (
@@ -107,8 +142,30 @@ const ChatPage = ({user}) => {
             <p className="title">SaadChat</p>
         </div>
         <div className='hero-body'>
-          <ChatHistory messages={chatHistory} user={user} />
-          <ChatInput send={send}/>
+          {/* <ChatHistory messages={chatHistory} user={user} /> */}
+          {userList.length === 0 ? <h1>Nobody has joined yet</h1> : 
+            <select onChange={setNewUserToChat}>
+                    <option value={'select-user'} className="username-list">Select User</option>
+                    {
+                        userList.map(user => {
+                            if (user.userID !== userID) {
+                                return (
+                                    <option value={user.userID} className="username-list">
+                                        {user.username}
+                                    </option>
+                                )
+                            }
+                        })
+                    }
+            </select>
+          }
+          <div>
+            <div>
+              {message}
+            </div>
+            <input type="text" id="message-text" onKeyPress={handleSend} />
+          </div>
+          {/* <ChatInput send={send}/> */}
         </div>
     </section>
   )
