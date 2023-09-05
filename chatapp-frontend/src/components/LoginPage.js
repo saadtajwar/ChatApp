@@ -9,7 +9,7 @@ const LoginPage = ({user, setUser}) => {
 
     if (user) {
         return (
-            <div>Already logged in!</div>
+            <div>Already logged in! You are {user}</div>
         )
     }
 

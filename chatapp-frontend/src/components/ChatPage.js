@@ -1,23 +1,95 @@
 import React, { useEffect, useState } from 'react'
-import {connect, sendMsg} from '../api'
 import ChatHistory from './ChatHistory';
 import ChatInput from './ChatInput';
 
 const ChatPage = ({user}) => {
   const [chatHistory, setChatHistory] = useState([]);
+  const [userList, setUserList] = useState([]);
+  const [message, setMessage] = useState('');
+  const [selectedUserID, setSelectedUserID] = useState('');
+  const [userID, setUserID] = useState('');
+  const webSocketConnection = new WebSocket(`ws://localhost:8080/ws/${user}`);
+
+  
 
   useEffect(() => {
-    connect((msg) => {
-      console.log("New Message from useeffect?");
-      setChatHistory(prevChatHistory => [...prevChatHistory, msg]);
-      console.log(chatHistory);
-    });
-  }, []);
+    const callback = (msg) => {
+          setChatHistory(prevChatHistory => [...prevChatHistory, msg]);
+    }
+    subscribeToSocket(callback);
+  }, [])
 
+
+  // useEffect(() => {
+  //   connect((msg) => {
+  //     console.log("New Message from useeffect?");
+  //     setChatHistory(prevChatHistory => [...prevChatHistory, msg]);
+  //     console.log(chatHistory);
+  //   });
+  // }, []);
+
+
+  const subscribeToSocket = (callback) => {
+    if (webSocketConnection === null) {
+      return;
+    }
+
+    webSocketConnection.onopen = () => {
+      console.log("Successfully Connected");
+    };
+  
+    webSocketConnection.onmessage = (event) => {
+      console.log("here in the onmessage")
+      try {
+        const socketPayload = JSON.parse(event.data);
+        switch (socketPayload.eventname) {
+          case 'register':
+          case 'disconnect':
+            if (!socketPayload.eventpayload) {
+              return;
+            }
+            const userInitPayload = socketPayload.eventpayload;
+            setUserList(userInitPayload.users);
+            setUserID(userID === null ? userInitPayload.userid : userID);
+            break;
+          case 'message response':
+            if (!socketPayload.eventpayload) {
+              return;
+            }
+            const payload = socketPayload.eventpayload;
+            const sentBy = payload.username ? payload.username : 'Unnamed';
+            const message = payload.message;
+            setMessage(`${sentBy}: ${message}`)
+
+            break;
+          default:
+            break;
+        }
+        // callback(event.data)
+      } catch (error) {
+        console.log(error)
+      }
+    };
+  
+    webSocketConnection.onclose = (event) => {
+      setMessage('Connected closed');
+      setUserList([]);
+    };
+  
+    webSocketConnection.onerror = (error) => {
+      console.log("Error: ", error);
+    };  
+  }
 
   const send = (e) => {
     if (e.keyCode === 13) {
-      sendMsg(e.target.value);
+      console.log('Here in the send block')
+      webSocketConnection.send(JSON.stringify({
+        EventName: 'message',
+        EventPayload: {
+          Message: e.target.value
+        }
+      }))
       e.target.value = "";
     }
   }
@@ -27,6 +99,7 @@ const ChatPage = ({user}) => {
       <div>Must be signed in to use the chat functions!</div>
     )
   }
+
 
   return (
     <section className="hero is-warning">

@@ -32,6 +32,7 @@ func HandleSocketPayloadEvents(client *Client, socketEvent SocketEvent) {
 			EventName: socketEvent.EventName,
 			EventPayload: Payload{
 				UserID: client.UserID,
+				Users:  GetAllConnectedUsers(client.Pool),
 			},
 		}
 		BroadcastMessageToAll(client.Pool, registerEvent)
@@ -41,6 +42,7 @@ func HandleSocketPayloadEvents(client *Client, socketEvent SocketEvent) {
 			EventName: socketEvent.EventName,
 			EventPayload: Payload{
 				UserID: client.UserID,
+				Users:  GetAllConnectedUsers(client.Pool),
 			},
 		}
 		BroadcastMessageToAll(client.Pool, disconnectEvent)
@@ -77,4 +79,13 @@ func BroadcastMessageToAll(pool *Pool, socketEvent SocketEvent) {
 			delete(pool.Clients, client)
 		}
 	}
+}
+
+func GetAllConnectedUsers(pool *Pool) []User {
+	var users []User
+	for client := range pool.Clients {
+		user := User{Username: client.Username, UserID: client.UserID}
+		users = append(users, user)
+	}
+	return users
 }

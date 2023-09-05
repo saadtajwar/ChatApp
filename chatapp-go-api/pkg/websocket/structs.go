@@ -25,4 +25,10 @@ type Payload struct {
 	UserID   string `json:"userid"`
 	Username string `json:"username"`
 	Message  string `json:"message"`
+	Users    []User `json:"users,omitempty"`
+}
+
+type User struct {
+	Username string `json:"username"`
+	UserID   string `json:"userid"`
 }
