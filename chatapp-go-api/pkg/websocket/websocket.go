@@ -24,14 +24,35 @@ func Upgrade(w http.ResponseWriter, r *http.Request) (*websocket.Conn, error) {
 }
 
 func HandleSocketPayloadEvents(client *Client, socketEvent SocketEvent) {
-	var socketEventResponse SocketEvent
-	selectedUserID := socketEvent.EventPayload.UserID
-	socketEventResponse.EventName = "Message Response"
-	socketEventResponse.EventPayload = Payload{
-		UserID: selectedUserID,
-		Message: socketEvent.EventPayload.Message,
-		Username: ,
+	eventType := socketEvent.EventName
+	switch eventType {
+	case "register":
+		fmt.Printf("register statement")
+		registerEvent := SocketEvent{
+			EventName: socketEvent.EventName,
+			EventPayload: Payload{
+				UserID: client.UserID,
+			},
+		}
+		BroadcastMessageToAll(client.Pool, registerEvent)
+	case "disconnect":
+		fmt.Printf("disconnect statement")
+		disconnectEvent := SocketEvent{
+			EventName: socketEvent.EventName,
+			EventPayload: Payload{
+				UserID: client.UserID,
+			},
+		}
+		BroadcastMessageToAll(client.Pool, disconnectEvent)
+	case "message":
+		fmt.Printf("direct message")
+		socketEventResponse := SocketEvent{
+			EventName:    "message response",
+			EventPayload: socketEvent.EventPayload,
+		}
+		EmitToSpecificClient(client.Pool, socketEventResponse, socketEventResponse.EventPayload.UserID)
 	}
+
 }
 
 func EmitToSpecificClient(pool *Pool, payload SocketEvent, UserID string) {
@@ -43,6 +64,17 @@ func EmitToSpecificClient(pool *Pool, payload SocketEvent, UserID string) {
 				close(client.Send)
 				delete(pool.Clients, client)
 			}
+		}
+	}
+}
+
+func BroadcastMessageToAll(pool *Pool, socketEvent SocketEvent) {
+	for client, _ := range pool.Clients {
+		select {
+		case client.Send <- socketEvent:
+		default:
+			close(client.Send)
+			delete(pool.Clients, client)
 		}
 	}
 }

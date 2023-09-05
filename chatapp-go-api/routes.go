@@ -29,14 +29,8 @@ func wshandler(w http.ResponseWriter, r *http.Request, pool *websocket.Pool, use
 		UserID:   uniqueID,
 	}
 
-	anotherClient := &websocket.Client{
-		Username: "lol",
-		UserID:   "myID",
-	}
-
-	fmt.Printf(anotherClient.UserID)
-
 	pool.Register <- client
+	go client.Write()
 	go client.Read()
 
 }

@@ -1,8 +1,12 @@
 package websocket
 
 import (
-	"fmt"
+	"bytes"
+	"encoding/json"
 	"log"
+	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 func (client *Client) Read() {
@@ -18,13 +22,58 @@ func (client *Client) Read() {
 			return
 		}
 
-		payload := Payload{
-			UserID:   client.UserID,
-			Username: client.Username,
-			Message:  string(msg),
+		var socketEvent SocketEvent
+		decoder := json.NewDecoder(bytes.NewReader(msg))
+		decodeErr := decoder.Decode(&socketEvent)
+		if decodeErr != nil {
+			log.Println(decodeErr)
+			return
 		}
-		message := SocketEvent{EventName: "Broadcast", EventPayload: payload}
-		client.Pool.Broadcast <- message
-		fmt.Printf("Message Received: %+v\n", message)
+
+		HandleSocketPayloadEvents(client, socketEvent)
+	}
+}
+
+func (c *Client) Write() {
+	ticker := time.NewTicker(((60 * time.Second) * 9) / 10)
+	defer func() {
+		ticker.Stop()
+		c.Conn.Close()
+	}()
+	for {
+		select {
+		case payload, ok := <-c.Send:
+			reqBodyBytes := new(bytes.Buffer)
+			json.NewEncoder(reqBodyBytes).Encode(payload)
+			finalPayload := reqBodyBytes.Bytes()
+
+			c.Conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+			if !ok {
+				c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
+				return
+			}
+
+			w, err := c.Conn.NextWriter(websocket.TextMessage)
+			if err != nil {
+				return
+			}
+
+			w.Write(finalPayload)
+
+			n := len(c.Send)
+			for i := 0; i < n; i++ {
+				json.NewEncoder(reqBodyBytes).Encode(<-c.Send)
+				w.Write(reqBodyBytes.Bytes())
+			}
+
+			if err := w.Close(); err != nil {
+				return
+			}
+		case <-ticker.C:
+			c.Conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				return
+			}
+		}
 	}
 }
