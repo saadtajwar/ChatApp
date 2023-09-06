@@ -28,10 +28,10 @@ func wshandler(w http.ResponseWriter, r *http.Request, pool *websocket.Pool, use
 		Send:     make(chan websocket.SocketEvent),
 		UserID:   uniqueID,
 	}
-	fmt.Printf(client.UserID)
 	go client.WritePump()
 	go client.ReadPump()
 	client.Pool.Register <- client
+	fmt.Println("The userid of the client that is being registered (in the wshandler route)", client.UserID)
 
 }
 

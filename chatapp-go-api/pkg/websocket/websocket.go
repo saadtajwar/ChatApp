@@ -28,7 +28,7 @@ func HandleSocketPayloadEvents(client *Client, socketEvent SocketEvent) {
 	eventType := socketEvent.EventName
 	switch eventType {
 	case "register":
-		fmt.Printf("register statement")
+		fmt.Println("register statement")
 		registerEvent := SocketEvent{
 			EventName: socketEvent.EventName,
 			EventPayload: Payload{
@@ -38,7 +38,7 @@ func HandleSocketPayloadEvents(client *Client, socketEvent SocketEvent) {
 		}
 		BroadcastMessageToAll(client.Pool, registerEvent)
 	case "disconnect":
-		fmt.Printf("disconnect statement")
+		fmt.Println("disconnect statement")
 		disconnectEvent := SocketEvent{
 			EventName: socketEvent.EventName,
 			EventPayload: Payload{
@@ -48,7 +48,7 @@ func HandleSocketPayloadEvents(client *Client, socketEvent SocketEvent) {
 		}
 		BroadcastMessageToAll(client.Pool, disconnectEvent)
 	case "message":
-		fmt.Printf("direct message")
+		fmt.Println("direct message")
 		socketEventResponse := SocketEvent{
 			EventName: "message response",
 			EventPayload: Payload{
@@ -76,6 +76,7 @@ func EmitToSpecificClient(pool *Pool, payload SocketEvent, UserID string) {
 		}
 	}
 
+	fmt.Println("USERID of the client getting the message is ", UserID)
 	fmt.Println("EmitToSpecificClient :: Message Broadcasted, waiting for WaitGroup")
 	wg.Wait()
 
@@ -106,6 +107,7 @@ func BroadcastMessageToAll(pool *Pool, socketEvent SocketEvent) {
 }
 
 func SendMessageToChannel(client *Client, socketEvent SocketEvent) {
+	fmt.Println("The userid of the client for the SendMessageToChannel ", client.UserID)
 	client.Send <- socketEvent
 }
 

@@ -9,75 +9,84 @@ const ChatPage = ({user}) => {
   const [selectedUserID, setSelectedUserID] = useState('');
   const [userID, setUserID] = useState('');
   let webSocketConnection = new WebSocket(`ws://localhost:8080/ws/${user}`)
-  console.log('userlist', userList);
 
   useEffect(() => {
+    if (userID !== '') return;
+    const subscribeToSocket = () => {
+      if (webSocketConnection === null) {
+        return;
+      }
+  
+      webSocketConnection.onopen = () => {
+        console.log("Successfully Connected");
+      };
+    
+      webSocketConnection.onmessage = (event) => {
+        console.log("here in the onmessage")
+        try {
+          const socketPayload = JSON.parse(event.data);
+          console.log('payload', socketPayload);
+          switch (socketPayload.eventname) {
+            case 'register':
+              console.log("Here in the register");
+              if (!socketPayload.eventpayload) {
+                return;
+              }
+              const userInitPayload = socketPayload.eventpayload;
+              // if (userList.length === 0) setUserList(userInitPayload.users);
+              // if (!userID) setUserID(userInitPayload.userid);
+              break;
+            case 'disconnect':
+              if (!socketPayload.eventpayload) {
+                return;
+              }
+              const newUserList = userList.filter(u => u.userid !== socketPayload.eventpayload.userid);
+              setUserList(newUserList);
+              break;
+            case 'message response':
+              console.log("here in the messages response");
+              if (!socketPayload.eventpayload) {
+                return;
+              }
+              const payload = socketPayload.eventpayload;
+              const sentBy = payload.username ? payload.username : 'Unnamed';
+              const message = payload.message;
+              setMessage(`${sentBy}: ${message}`);
+              break;
+            default:
+              break;
+          }
+          // callback(event.data)
+        } catch (error) {
+          console.log(error)
+        }
+      };
+    
+      webSocketConnection.onclose = (event) => {
+        setMessage('Connected closed');
+        setUserList([]);
+      };
+    
+      webSocketConnection.onerror = (error) => {
+        console.log("Error: ", error);
+      };  
+    }
+    console.log("Here in the useeffect")
+    subscribeToSocket();
     // const callback = (msg) => {
     //       setChatHistory(prevChatHistory => [...prevChatHistory, msg]);
     // }
-    console.log("Here in the useeffect")
-    subscribeToSocket();
-  }, [])
+  }, [userID])
 
 
-  const subscribeToSocket = () => {
-    if (webSocketConnection === null) {
-      return;
-    }
-
-    webSocketConnection.onopen = () => {
-      console.log("Successfully Connected");
-    };
-  
-    webSocketConnection.onmessage = (event) => {
-      console.log("here in the onmessage")
-      try {
-        const socketPayload = JSON.parse(event.data);
-        console.log('payload', socketPayload);
-        switch (socketPayload.eventname) {
-          case 'register':
-            console.log("Here in the register")
-            break;
-          case 'disconnect':
-            if (!socketPayload.eventpayload) {
-              return;
-            }
-            const userInitPayload = socketPayload.eventpayload;
-            setUserList(userInitPayload.users);
-            setUserID(userID === null ? userInitPayload.userid : userID);
-            break;
-          case 'message response':
-            if (!socketPayload.eventpayload) {
-              return;
-            }
-            const payload = socketPayload.eventpayload;
-            const sentBy = payload.username ? payload.username : 'Unnamed';
-            const message = payload.message;
-            setMessage(`${sentBy}: ${message}`)
-            break;
-          default:
-            break;
-        }
-        // callback(event.data)
-      } catch (error) {
-        console.log(error)
-      }
-    };
-  
-    webSocketConnection.onclose = (event) => {
-      setMessage('Connected closed');
-      setUserList([]);
-    };
-  
-    webSocketConnection.onerror = (error) => {
-      console.log("Error: ", error);
-    };  
-  }
+  console.log('userlist', userList);
+  console.log("userid", userID)
 
   const handleSend = (event) => {
     try  {
       if (event.keyCode === 13) {
-        if (!this.webSocketConnection || !event.target.value) { 
+        if (!webSocketConnection || !event.target.value) {
+          console.log("In handlesend - cannot send message");
           return false;
         }
 

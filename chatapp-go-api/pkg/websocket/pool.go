@@ -14,6 +14,7 @@ func (pool *Pool) Start() {
 	for {
 		select {
 		case client := <-pool.Register:
+			fmt.Println("Register happening here in pool start")
 			HandleUserRegister(pool, client)
 		case client := <-pool.Unregister:
 			HandleUserDisconnect(pool, client)
