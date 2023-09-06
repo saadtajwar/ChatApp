@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
 
 	"github.com/gorilla/websocket"
 )
@@ -62,27 +63,50 @@ func HandleSocketPayloadEvents(client *Client, socketEvent SocketEvent) {
 }
 
 func EmitToSpecificClient(pool *Pool, payload SocketEvent, UserID string) {
+	wg := new(sync.WaitGroup)
+
 	for client := range pool.Clients {
 		if client.UserID == UserID {
-			select {
-			case client.Send <- payload:
-			default:
-				close(client.Send)
-				delete(pool.Clients, client)
-			}
+			c := client
+			wg.Add(1)
+			go func(wg *sync.WaitGroup, c *Client) {
+				defer wg.Done()
+				SendMessageToChannel(c, payload)
+			}(wg, c)
 		}
 	}
+
+	fmt.Println("EmitToSpecificClient :: Message Broadcasted, waiting for WaitGroup")
+	wg.Wait()
+
 }
 
 func BroadcastMessageToAll(pool *Pool, socketEvent SocketEvent) {
-	for client, _ := range pool.Clients {
-		select {
-		case client.Send <- socketEvent:
-		default:
-			close(client.Send)
-			delete(pool.Clients, client)
-		}
+
+	wg := new(sync.WaitGroup)
+
+	for client := range pool.Clients {
+
+		c := client
+		wg.Add(1)
+		go func(wg *sync.WaitGroup, c *Client) {
+			defer wg.Done()
+			SendMessageToChannel(c, socketEvent)
+		}(wg, c)
+		// select {
+		// case client.Send <- socketEvent:
+		// 	// default:
+		// 	// 	close(client.Send)
+		// 	// 	delete(pool.Clients, client)
+		// }
 	}
+	fmt.Println("BroadcastMessageToAll :: Message Broadcasted, waiting for WaitGroup")
+	wg.Wait()
+
+}
+
+func SendMessageToChannel(client *Client, socketEvent SocketEvent) {
+	client.Send <- socketEvent
 }
 
 func GetAllConnectedUsers(pool *Pool) []User {

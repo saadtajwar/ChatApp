@@ -3,6 +3,7 @@ package websocket
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"time"
 
@@ -46,6 +47,8 @@ func (c *Client) WritePump() {
 			reqBodyBytes := new(bytes.Buffer)
 			json.NewEncoder(reqBodyBytes).Encode(payload)
 			finalPayload := reqBodyBytes.Bytes()
+
+			fmt.Println("pushing message", string(finalPayload))
 
 			c.Conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 			if !ok {

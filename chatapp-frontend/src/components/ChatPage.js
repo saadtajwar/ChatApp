@@ -8,18 +8,19 @@ const ChatPage = ({user}) => {
   const [message, setMessage] = useState('');
   const [selectedUserID, setSelectedUserID] = useState('');
   const [userID, setUserID] = useState('');
-  const webSocketConnection = new WebSocket(`ws://localhost:8080/ws/${user}`)
+  let webSocketConnection = new WebSocket(`ws://localhost:8080/ws/${user}`)
   console.log('userlist', userList);
 
   useEffect(() => {
-    const callback = (msg) => {
-          setChatHistory(prevChatHistory => [...prevChatHistory, msg]);
-    }
-    subscribeToSocket(callback);
+    // const callback = (msg) => {
+    //       setChatHistory(prevChatHistory => [...prevChatHistory, msg]);
+    // }
+    console.log("Here in the useeffect")
+    subscribeToSocket();
   }, [])
 
 
-  const subscribeToSocket = (callback) => {
+  const subscribeToSocket = () => {
     if (webSocketConnection === null) {
       return;
     }
@@ -35,6 +36,8 @@ const ChatPage = ({user}) => {
         console.log('payload', socketPayload);
         switch (socketPayload.eventname) {
           case 'register':
+            console.log("Here in the register")
+            break;
           case 'disconnect':
             if (!socketPayload.eventpayload) {
               return;
@@ -51,7 +54,6 @@ const ChatPage = ({user}) => {
             const sentBy = payload.username ? payload.username : 'Unnamed';
             const message = payload.message;
             setMessage(`${sentBy}: ${message}`)
-
             break;
           default:
             break;
