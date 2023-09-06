@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
 
-const ChatInput = ({send}) => {
+const ChatInput = ({handleSend}) => {
 
     return (
         <div>
-            <input onKeyDown={send}/>
+            <input onKeyDown={handleSend}/>
         </div>
     )
 }

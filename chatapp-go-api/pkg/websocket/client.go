@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func (client *Client) Read() {
+func (client *Client) ReadPump() {
 	defer func() {
 		client.Pool.Unregister <- client
 		client.Conn.Close()
@@ -34,7 +34,7 @@ func (client *Client) Read() {
 	}
 }
 
-func (c *Client) Write() {
+func (c *Client) WritePump() {
 	ticker := time.NewTicker(((60 * time.Second) * 9) / 10)
 	defer func() {
 		ticker.Stop()

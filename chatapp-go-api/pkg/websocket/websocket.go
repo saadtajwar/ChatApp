@@ -49,8 +49,12 @@ func HandleSocketPayloadEvents(client *Client, socketEvent SocketEvent) {
 	case "message":
 		fmt.Printf("direct message")
 		socketEventResponse := SocketEvent{
-			EventName:    "message response",
-			EventPayload: socketEvent.EventPayload,
+			EventName: "message response",
+			EventPayload: Payload{
+				Username: socketEvent.EventPayload.Username,
+				UserID:   socketEvent.EventPayload.UserID,
+				Message:  socketEvent.EventPayload.Message,
+			},
 		}
 		EmitToSpecificClient(client.Pool, socketEventResponse, socketEventResponse.EventPayload.UserID)
 	}

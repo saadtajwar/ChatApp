@@ -8,9 +8,8 @@ const ChatPage = ({user}) => {
   const [message, setMessage] = useState('');
   const [selectedUserID, setSelectedUserID] = useState('');
   const [userID, setUserID] = useState('');
-  const webSocketConnection = new WebSocket(`ws://localhost:8080/ws/${user}`);
-
-  
+  const webSocketConnection = new WebSocket(`ws://localhost:8080/ws/${user}`)
+  console.log('userlist', userList);
 
   useEffect(() => {
     const callback = (msg) => {
@@ -18,15 +17,6 @@ const ChatPage = ({user}) => {
     }
     subscribeToSocket(callback);
   }, [])
-
-
-  // useEffect(() => {
-  //   connect((msg) => {
-  //     console.log("New Message from useeffect?");
-  //     setChatHistory(prevChatHistory => [...prevChatHistory, msg]);
-  //     console.log(chatHistory);
-  //   });
-  // }, []);
 
 
   const subscribeToSocket = (callback) => {
@@ -42,6 +32,7 @@ const ChatPage = ({user}) => {
       console.log("here in the onmessage")
       try {
         const socketPayload = JSON.parse(event.data);
+        console.log('payload', socketPayload);
         switch (socketPayload.eventname) {
           case 'register':
           case 'disconnect':
@@ -81,30 +72,18 @@ const ChatPage = ({user}) => {
     };  
   }
 
-  // const send = (e) => {
-  //   if (e.keyCode === 13) {
-  //     console.log('Here in the send block')
-  //     webSocketConnection.send(JSON.stringify({
-  //       EventName: 'message',
-  //       EventPayload: {
-  //         Message: e.target.value
-  //       }
-  //     }))
-  //     e.target.value = "";
-  //   }
-  // }
-
   const handleSend = (event) => {
     try  {
-      if (event.key === 'Enter') {
+      if (event.keyCode === 13) {
         if (!this.webSocketConnection || !event.target.value) { 
           return false;
         }
 
         webSocketConnection.send(JSON.stringify({
-          EventName: 'message',
-          EventPayload: {
-            Message: event.target.value
+          eventname: 'message',
+          eventpayload: {
+            userid: selectedUserID,
+            message: event.target.value
           }
         }));
 
@@ -124,7 +103,7 @@ const ChatPage = ({user}) => {
             alert("Select a user to chat");
             return;
         }
-        setSelectedUserID(event.target.value)
+        setSelectedUserID(event.target.value);
     }
 }
 
@@ -147,13 +126,11 @@ const ChatPage = ({user}) => {
             <select onChange={setNewUserToChat}>
                     <option value={'select-user'} className="username-list">Select User</option>
                     {
-                        userList.map(user => {
-                            if (user.userID !== userID) {
-                                return (
-                                    <option value={user.userID} className="username-list">
+                        userList.map(userListUser => {
+                            if (userListUser.userID !== userID) {
+                                    return <option value={user.userID} className="username-list">
                                         {user.username}
                                     </option>
-                                )
                             }
                         })
                     }
@@ -163,9 +140,8 @@ const ChatPage = ({user}) => {
             <div>
               {message}
             </div>
-            <input type="text" id="message-text" onKeyPress={handleSend} />
+            <input onKeyDown={handleSend} />
           </div>
-          {/* <ChatInput send={send}/> */}
         </div>
     </section>
   )
