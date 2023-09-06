@@ -15,6 +15,12 @@ import (
 )
 
 func wshandler(w http.ResponseWriter, r *http.Request, pool *websocket.Pool, username string) {
+	for client := range pool.Clients {
+		if client.Username == username {
+			return
+		}
+	}
+
 	conn, err := websocket.Upgrade(w, r)
 	if err != nil {
 		log.Fatalf("Error when upgrading HTTP connection to Websocket protocol %s", err)

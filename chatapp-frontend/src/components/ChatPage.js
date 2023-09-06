@@ -4,11 +4,13 @@ import ChatInput from './ChatInput';
 
 const ChatPage = ({user}) => {
   const [chatHistory, setChatHistory] = useState([]);
-  const [userList, setUserList] = useState([]);
+  // const [userList, setUserList] = useState([]);
   const [message, setMessage] = useState('');
   const [selectedUserID, setSelectedUserID] = useState('');
-  const [userID, setUserID] = useState('');
+  // const [userID, setUserID] = useState('');
   let webSocketConnection = new WebSocket(`ws://localhost:8080/ws/${user}`)
+  let userID = '';
+  let userList = [];
 
   useEffect(() => {
     if (userID !== '') return;
@@ -33,15 +35,23 @@ const ChatPage = ({user}) => {
                 return;
               }
               const userInitPayload = socketPayload.eventpayload;
-              // if (userList.length === 0) setUserList(userInitPayload.users);
+              if (userInitPayload.username === user) {
+                console.log("made it in here to assign the userID");
+                userID = userInitPayload.userid;
+              }
+              userList = userInitPayload.users;
+              // if (userList !== userInitPayload) setUserList(userInitPayload.users);
               // if (!userID) setUserID(userInitPayload.userid);
+              console.log('The new userID: ', userID);
+              console.log('The new userlist: ', userList);
               break;
             case 'disconnect':
               if (!socketPayload.eventpayload) {
                 return;
               }
               const newUserList = userList.filter(u => u.userid !== socketPayload.eventpayload.userid);
-              setUserList(newUserList);
+              console.log('here in disconnect');
+              // setUserList(newUserList);
               break;
             case 'message response':
               console.log("here in the messages response");
@@ -64,7 +74,7 @@ const ChatPage = ({user}) => {
     
       webSocketConnection.onclose = (event) => {
         setMessage('Connected closed');
-        setUserList([]);
+        // setUserList([]);
       };
     
       webSocketConnection.onerror = (error) => {

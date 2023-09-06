@@ -16,12 +16,14 @@ const App = () => {
     }
   }, [])
 
+
+
   return (
     <Router>
       <Routes>
         <Route path='/register' element={<RegisterPage user={user} />} />
         <Route path='/login' element={<LoginPage user={user} setUser={setUser} />}  />
-        <Route path='/chat' element={<ChatPage user={user} />} />
+        <Route path='/chat' element={user === null ? <>Login required</> : <ChatPage user={user} />} />
         <Route path='/' element={<HomePage />} />
       </Routes>
     </Router>

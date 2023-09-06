@@ -32,8 +32,9 @@ func HandleSocketPayloadEvents(client *Client, socketEvent SocketEvent) {
 		registerEvent := SocketEvent{
 			EventName: socketEvent.EventName,
 			EventPayload: Payload{
-				UserID: client.UserID,
-				Users:  GetAllConnectedUsers(client.Pool),
+				UserID:   client.UserID,
+				Username: client.Username,
+				Users:    GetAllConnectedUsers(client.Pool),
 			},
 		}
 		BroadcastMessageToAll(client.Pool, registerEvent)
@@ -42,8 +43,9 @@ func HandleSocketPayloadEvents(client *Client, socketEvent SocketEvent) {
 		disconnectEvent := SocketEvent{
 			EventName: socketEvent.EventName,
 			EventPayload: Payload{
-				UserID: client.UserID,
-				Users:  GetAllConnectedUsers(client.Pool),
+				UserID:   client.UserID,
+				Username: client.Username,
+				Users:    GetAllConnectedUsers(client.Pool),
 			},
 		}
 		BroadcastMessageToAll(client.Pool, disconnectEvent)
