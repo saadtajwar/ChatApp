@@ -12,6 +12,11 @@ const ChatPage = ({user}) => {
 
   useEffect(() => {
     if (userID !== '') return;
+    // const callback = (msg) => {
+    //   console.log("Callback being called")
+    //   setChatHistory(prevChatHistory => [...prevChatHistory, msg]);
+    // }
+
     const setConnection = () => {
       const webSocketConnection = new WebSocket(`ws://localhost:8080/ws/${user}`)
       setWebSocketConnection(webSocketConnection);
@@ -37,10 +42,7 @@ const ChatPage = ({user}) => {
                 console.log("made it in here to assign the userID");
                 setUserID(userInitPayload.userid);
               }
-              // const newUser = {username: userInitPayload.username, userid: userInitPayload.id};
               setUserList(userInitPayload.users);
-              // if (userList !== userInitPayload) setUserList(userInitPayload.users);
-              // if (!userID) setUserID(userInitPayload.userid);
               console.log('The new userID: ', userID);
               console.log('The new userlist: ', userList);
               break;
@@ -53,19 +55,24 @@ const ChatPage = ({user}) => {
               // setUserList(newUserList);
               break;
             case 'message response':
-              console.log("here in the messages response");
+              console.log("here in the messages response bro", socketPayload);
               if (!socketPayload.eventpayload) {
+                console.log("Getting stuck in this dumb return");
                 return;
               }
+              console.log("Got here right before payload");
               const payload = socketPayload.eventpayload;
               const sentBy = payload.username ? payload.username : 'Unnamed';
-              const message = payload.message;
-              setMessage(`${sentBy}: ${message}`);
+              const msg = payload.message;
+              const messageToDisplay = `${sentBy}: ${msg}`;
+              console.log('The messagetodisplay: ', messageToDisplay);
+              setChatHistory(prevChatHistory => [...prevChatHistory, messageToDisplay]);
+              // callback(messageToDisplay);
+              // setMessage(messageToDisplay);
               break;
             default:
               break;
           }
-          // callback(event.data)
         } catch (error) {
           console.log(error)
         }
@@ -86,9 +93,6 @@ const ChatPage = ({user}) => {
     setConnection();
     // subscribeToSocket();
 
-    // const callback = (msg) => {
-    //       setChatHistory(prevChatHistory => [...prevChatHistory, msg]);
-    // }
   }, [])
 
 
@@ -158,7 +162,11 @@ const ChatPage = ({user}) => {
           }
           <div>
             <div>
-              {message}
+              <ol>
+                {chatHistory.map(chat => (
+                  <li>{chat}</li>
+                ))}
+              </ol>
             </div>
             <input onKeyDown={handleSend} />
           </div>
