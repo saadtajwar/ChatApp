@@ -1,28 +1,27 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import ChatHistory from './ChatHistory';
 import ChatInput from './ChatInput';
 
 const ChatPage = ({user}) => {
   const [chatHistory, setChatHistory] = useState([]);
-  // const [userList, setUserList] = useState([]);
+  const [userList, setUserList] = useState([]);
   const [message, setMessage] = useState('');
   const [selectedUserID, setSelectedUserID] = useState('');
-  // const [userID, setUserID] = useState('');
-  let webSocketConnection = new WebSocket(`ws://localhost:8080/ws/${user}`)
-  let userID = '';
-  let userList = [];
+  const [userID, setUserID] = useState('');
+  const [webSocketConnection, setWebSocketConnection] = useState(null);
+  // let userID = '';
+  // let userList = [];
 
   useEffect(() => {
     if (userID !== '') return;
-    const subscribeToSocket = () => {
-      if (webSocketConnection === null) {
-        return;
-      }
-  
+    const setConnection = () => {
+      const webSocketConnection = new WebSocket(`ws://localhost:8080/ws/${user}`)
+      setWebSocketConnection(webSocketConnection);
+      console.log("Set the ws conn, here is what it is ", webSocketConnection);
       webSocketConnection.onopen = () => {
         console.log("Successfully Connected");
       };
-    
+
       webSocketConnection.onmessage = (event) => {
         console.log("here in the onmessage")
         try {
@@ -37,9 +36,10 @@ const ChatPage = ({user}) => {
               const userInitPayload = socketPayload.eventpayload;
               if (userInitPayload.username === user) {
                 console.log("made it in here to assign the userID");
-                userID = userInitPayload.userid;
+                setUserID(userInitPayload.userid);
               }
-              userList = userInitPayload.users;
+              const newUser = {username: userInitPayload.username, userid: userInitPayload.id};
+              setUserList(prevUsers => [...prevUsers, newUser]);
               // if (userList !== userInitPayload) setUserList(userInitPayload.users);
               // if (!userID) setUserID(userInitPayload.userid);
               console.log('The new userID: ', userID);
@@ -71,22 +71,36 @@ const ChatPage = ({user}) => {
           console.log(error)
         }
       };
-    
+
       webSocketConnection.onclose = (event) => {
         setMessage('Connected closed');
         // setUserList([]);
       };
     
       webSocketConnection.onerror = (error) => {
-        console.log("Error: ", error);
+        console.log("Error for the websocket: ", error);
       };  
+
     }
-    console.log("Here in the useeffect")
-    subscribeToSocket();
+
+    const subscribeToSocket = () => {
+      // console.log("What the connection looks like", webSocketConnection);
+      // if (webSocketConnection === null) {
+      //   console.log("Here in websocketconnection being null")
+      //   return;
+      // }
+  
+    
+    
+    }
+    console.log("Here in the useeffect");
+    setConnection();
+    // subscribeToSocket();
+
     // const callback = (msg) => {
     //       setChatHistory(prevChatHistory => [...prevChatHistory, msg]);
     // }
-  }, [userID])
+  }, [])
 
 
   console.log('userlist', userList);
