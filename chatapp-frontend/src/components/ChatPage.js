@@ -51,9 +51,9 @@ const ChatPage = ({user}) => {
               if (!socketPayload.eventpayload) {
                 return;
               }
-              const newUserList = userList.filter(u => u.userid !== socketPayload.eventpayload.userid);
+              // const newUserList = userList.filter(u => u.userid !== socketPayload.eventpayload.userid);
               console.log('here in disconnect');
-              // setUserList(newUserList);
+              setUserList(socketPayload.eventpayload.users);
               break;
             case 'message response':
               console.log("here in the messages response bro", socketPayload);
@@ -150,7 +150,7 @@ const ChatPage = ({user}) => {
   return (
     <section className="hero is-warning">
         <div className="hero-body">
-            <p className="title">SaadChat</p>
+            <p className="title">Welcome to SaadChat, you are currently signed in as {user}</p>
         </div>
         <div className='hero-body'>
           {/* <ChatHistory messages={chatHistory} user={user} /> */}
