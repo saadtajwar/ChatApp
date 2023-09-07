@@ -7,6 +7,7 @@ const ChatPage = ({user}) => {
   const [userList, setUserList] = useState([]);
   const [message, setMessage] = useState('');
   const [selectedUserID, setSelectedUserID] = useState('');
+  const [selectedUsername, setSelectedUsername] = useState('');
   const [userID, setUserID] = useState('');
   const [webSocketConnection, setWebSocketConnection] = useState(null);
 
@@ -64,7 +65,7 @@ const ChatPage = ({user}) => {
               const payload = socketPayload.eventpayload;
               const sentBy = payload.username ? payload.username : 'Unnamed';
               const msg = payload.message;
-              const messageToDisplay = `${sentBy}: ${msg}`;
+              const messageToDisplay = `${sentBy} said to you: ${msg}`;
               console.log('The messagetodisplay: ', messageToDisplay);
               setChatHistory(prevChatHistory => [...prevChatHistory, messageToDisplay]);
               // callback(messageToDisplay);
@@ -110,8 +111,10 @@ const ChatPage = ({user}) => {
             username: user
           }
         }));
-
+        const messageToDisplay = `You said to ${selectedUsername}: ${event.target.value}`
+        setChatHistory(prevChatHistory => [...prevChatHistory, messageToDisplay]);
         event.target.value = "";
+
 
       }
     } catch(error) {
@@ -127,7 +130,12 @@ const ChatPage = ({user}) => {
             alert("Select a user to chat");
             return;
         }
-        setSelectedUserID(event.target.value);
+        // console.log('the event for setting new user to chat', event)
+        const userToSendTo = JSON.parse(event.target.value);
+        // console.log(typeof userToSendTo.userid);
+        // console.log(typeof userToSendTo.username);
+        setSelectedUserID(userToSendTo.userid);
+        setSelectedUsername(userToSendTo.username)
     }
 }
 
@@ -152,7 +160,7 @@ const ChatPage = ({user}) => {
                     {
                         userList.map(userListUser => {
                             if (userListUser.userid !== userID) {
-                                    return <option value={userListUser.userid} className="username-list">
+                                    return <option value={JSON.stringify(userListUser)} className="username-list">
                                         {userListUser.username}
                                     </option>
                             }
