@@ -9,8 +9,6 @@ const ChatPage = ({user}) => {
   const [selectedUserID, setSelectedUserID] = useState('');
   const [userID, setUserID] = useState('');
   const [webSocketConnection, setWebSocketConnection] = useState(null);
-  // let userID = '';
-  // let userList = [];
 
   useEffect(() => {
     if (userID !== '') return;
@@ -34,12 +32,13 @@ const ChatPage = ({user}) => {
                 return;
               }
               const userInitPayload = socketPayload.eventpayload;
+              console.log('userinitpayload: ', userInitPayload);
               if (userInitPayload.username === user) {
                 console.log("made it in here to assign the userID");
                 setUserID(userInitPayload.userid);
               }
-              const newUser = {username: userInitPayload.username, userid: userInitPayload.id};
-              setUserList(prevUsers => [...prevUsers, newUser]);
+              // const newUser = {username: userInitPayload.username, userid: userInitPayload.id};
+              setUserList(userInitPayload.users);
               // if (userList !== userInitPayload) setUserList(userInitPayload.users);
               // if (!userID) setUserID(userInitPayload.userid);
               console.log('The new userID: ', userID);
@@ -83,16 +82,6 @@ const ChatPage = ({user}) => {
 
     }
 
-    const subscribeToSocket = () => {
-      // console.log("What the connection looks like", webSocketConnection);
-      // if (webSocketConnection === null) {
-      //   console.log("Here in websocketconnection being null")
-      //   return;
-      // }
-  
-    
-    
-    }
     console.log("Here in the useeffect");
     setConnection();
     // subscribeToSocket();
@@ -109,16 +98,12 @@ const ChatPage = ({user}) => {
   const handleSend = (event) => {
     try  {
       if (event.keyCode === 13) {
-        if (!webSocketConnection || !event.target.value) {
-          console.log("In handlesend - cannot send message");
-          return false;
-        }
-
         webSocketConnection.send(JSON.stringify({
           eventname: 'message',
           eventpayload: {
             userid: selectedUserID,
-            message: event.target.value
+            message: event.target.value,
+            username: user
           }
         }));
 
@@ -162,9 +147,9 @@ const ChatPage = ({user}) => {
                     <option value={'select-user'} className="username-list">Select User</option>
                     {
                         userList.map(userListUser => {
-                            if (userListUser.userID !== userID) {
-                                    return <option value={user.userID} className="username-list">
-                                        {user.username}
+                            if (userListUser.userid !== userID) {
+                                    return <option value={userListUser.userid} className="username-list">
+                                        {userListUser.username}
                                     </option>
                             }
                         })
